@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<base href="/">
+	<style>.active { color: red; font-weight: bold; }</style>
+</head>
+  <body ng-app="helloworld">
+    <div class="nav">
+      <a ui-sref="hello" ui-sref-active="active">Hello</a>
+      <a ui-sref="about" ui-sref-active="active">About</a>
+      <a ui-sref="people" ui-sref-active="active">People</a>
+    </div>
+
+    <ui-view></ui-view>
+  </body>
+  <script type="text/javascript" src="angular.min.js"></script>
+  <script type="text/javascript" src="ui-router.min.js"></script>
+  <script>
+  	var myApp = angular.module('helloworld', ['ui.router']);
+
+  	myApp.config(function($stateProvider) {
+  	  // ($locationProvider, $provide, ) $locationProvider.html5Mode(true);
+
+  	  var helloState = {
+  	    name: 'hello',
+  	    url: '/hello',
+  	    // template: '<h3>hello world!</h3>'
+	    component: 'hello'
+  	  }
+   	  var aboutState = {
+  	    name: 'about',
+  	    url: '/about',
+  	    template: '<h3>About page!</h3>'
+  	  }
+
+    var peopleState = {
+      name: 'people',
+      url: '/people',
+      component: 'people',
+      resolve: {
+        people: function(PeopleService) {
+          return PeopleService.getAllPeople();
+        }
+      }
+    }
+
+  	  var personState = {
+  	    name: 'people.person',
+  	    url: '/{personId}',
+  	    component: 'person',
+  	    resolve: {
+  	      person: function(people, $stateParams) {
+  	        return people.find(function(person) {
+  	          return person.id === $stateParams.personId;
+  	        });
+  	      }
+  	    }
+  	  }
+
+  	  $stateProvider.state(helloState);
+  	  $stateProvider.state(aboutState);
+  	  $stateProvider.state(peopleState);
+  	  $stateProvider.state(personState);
+  	});
+
+  	// Component
+  	myApp.component('hello', {
+	  template:  `<h3>{{hello.greeting}} world</h3>
+	             <button ng-click="hello.toggleGreeting()">toggle greeting</button>`,
+
+	  controller: function() {
+	    this.greeting = 'hello';
+
+	    this.toggleGreeting = function() {
+	      this.greeting = (this.greeting == 'hello') ? 'whats up' : 'hello'
+	    }
+	  },
+      controllerAs: "hello",
+	})
+
+	myApp.component('people', {
+	  bindings: { people: '<' },
+
+	  template: `<div class="flex-h">
+	              <div class="people">
+	                <h3>Some people:</h3>
+	                <ul>
+	                  <li ng-repeat="person in that.people">
+	                    <a ui-sref-active="active" ui-sref="people.person({ personId: person.id })">
+	                      {{person.name}}
+	                    </a>
+	                  </li>
+	                </ul>
+	              </div>
+	              <ui-view></ui-view>
+	            </div>`,
+      controllerAs: "that",
+	});
+
+	myApp.component('person', {
+	  bindings: { person: '<' },
+	  template: `<h3>A person!</h3>
+
+	            <div>Name: {{that.person.name}}</div>
+	            <div>Id: {{that.person.id}}</div>
+	            <div>Company: {{that.person.company}}</div>
+	            <div>Email: {{that.person.email}}</div>
+	            <div>Address: {{that.person.address}}</div>
+
+	            <button ui-sref="people">Close</button>`,
+      controllerAs: "that",
+	});
+
+	myApp.service('PeopleService', function($http) {
+	  return {
+	    getAllPeople: function() {
+	      return $http.get('people.json')
+	      .then(resp => resp.data);
+	    },
+
+	    getPerson: function(id) {
+	      return service.getAllPeople()
+	      .then(function (people) {
+	        return people.find(person => person.id === id)
+	      });
+	    }
+	  }
+	})
+  </script>
+</html>
